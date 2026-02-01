@@ -16,24 +16,39 @@ try:
 except ImportError:
     HAS_DATABASE = False
 
-# Import routers
-try:
-    from endpoints import signup_router, profile_router
-    HAS_ENDPOINTS = True
-except ImportError:
-    HAS_ENDPOINTS = False
-
-# Import AI Avatar service
+# Import AI Avatar service (always available)
 from services.ai_avatar.api import router as avatar_router
 from services.ai_avatar.config import API_VERSION
 
-# Import other routers (may not exist in all setups)
+# Import routers (may not exist or may have initialization errors)
+# Catch ALL exceptions since endpoints may fail during module initialization
+# (e.g., missing environment variables like AI_MODEL in theai.py)
+HAS_ENDPOINTS = False
+HAS_OTHER_ENDPOINTS = False
+signup_router = None
+login_router = None
+profile_router = None
+generic_router = None
+theai_router = None
+
 try:
-    from endpoints import signup_router, login_router, profile_router, generic_router, theai_router
+    from endpoints import signup_router, profile_router
+    HAS_ENDPOINTS = True
+except Exception as e:
+    # Log but don't fail - endpoints may have missing env vars or other issues
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Could not import endpoints (signup_router, profile_router): {type(e).__name__}: {e}")
+
+# Import other routers (may not exist or may have initialization errors)
+try:
+    from endpoints import login_router, generic_router, theai_router
     HAS_OTHER_ENDPOINTS = True
-except ImportError:
-    HAS_OTHER_ENDPOINTS = False
-    signup_router = login_router = profile_router = generic_router = theai_router = None
+except Exception as e:
+    # Log but don't fail - endpoints may have missing env vars or other issues
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Could not import other endpoints (login_router, generic_router, theai_router): {type(e).__name__}: {e}")
 
 
 @asynccontextmanager
