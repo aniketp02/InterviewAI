@@ -90,6 +90,13 @@ Once running, visit:
    DID_API_KEY=your_did_api_key_here
    AVATAR_MODE=video
    ```
+   
+   **Important for D-ID API Key:**
+   - D-ID API keys are typically in format: `username:password`
+   - The code automatically base64 encodes this format
+   - If your key is already base64 encoded, it will be used as-is
+   - **On Render Dashboard**: Go to Environment tab → Add `DID_API_KEY` as a **Secret** variable
+   - **Verify**: After deployment, check `/api/v1/avatar/status` to confirm API key is configured
 
 5. **Deploy!**
 
