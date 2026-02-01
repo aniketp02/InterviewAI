@@ -26,8 +26,14 @@ except ImportError:
 # Import AI Avatar service
 from services.ai_avatar.api import router as avatar_router
 from services.ai_avatar.config import API_VERSION
-from database import init_db
-from endpoints import signup_router, login_router, profile_router, generic_router, theai_router
+
+# Import other routers (may not exist in all setups)
+try:
+    from endpoints import signup_router, login_router, profile_router, generic_router, theai_router
+    HAS_OTHER_ENDPOINTS = True
+except ImportError:
+    HAS_OTHER_ENDPOINTS = False
+    signup_router = login_router = profile_router = generic_router = theai_router = None
 
 
 @asynccontextmanager
@@ -56,18 +62,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Include routers (avoid duplicates)
 if HAS_ENDPOINTS:
     app.include_router(signup_router)
     app.include_router(profile_router)
 
+# Include other routers if available (only if not already included)
+if HAS_OTHER_ENDPOINTS:
+    if login_router:
+        app.include_router(login_router)
+    if generic_router:
+        app.include_router(generic_router)
+    if theai_router:
+        app.include_router(theai_router)
+
 # Include AI Avatar service router
 app.include_router(avatar_router)
-app.include_router(signup_router)
-app.include_router(login_router)
-app.include_router(profile_router)
-app.include_router(generic_router)
-app.include_router(theai_router)
 
 
 @app.get("/")
@@ -96,7 +106,7 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
     )
-    return {"message": "Hello from Interview AI API"}
+
 
 @app.get("/health")
 def health():
